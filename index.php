@@ -152,7 +152,7 @@ foreach ($fields as $field) {
 
 // Сохранение в БД (код из 3 лабораторной)
 $user = 'u82669';
-$pass = 'ВАШ_ПАРОЛЬ';
+$pass = '9085380';
 try {
     $db = new PDO('mysql:host=localhost;dbname=u82669', $user, $pass,
         [PDO::ATTR_PERSISTENT => true, PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
