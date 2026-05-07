@@ -144,9 +144,11 @@
 
             <div class="form-group">
                 <label class="required">Дата рождения</label>
-                <input type="date" name="birth_date" 
+                <input type="text" name="birth_date" 
                        class="<?= $errors['birth_date'] ? 'error-input' : '' ?>"
-                       value="<?= htmlspecialchars($values['birth_date'] ?? '') ?>">
+                       value="<?= htmlspecialchars($values['birth_date'] ?? '') ?>"
+                       placeholder="ГГГГ-ММ-ДД (например, 2000-01-15)">
+                <small>Формат: ГГГГ-ММ-ДД. Дата не может быть в будущем.</small>
             </div>
 
             <div class="form-group">

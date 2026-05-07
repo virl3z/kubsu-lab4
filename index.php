@@ -4,31 +4,26 @@ header('Content-Type: text/html; charset=UTF-8');
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     $messages = array();
 
-    // Сообщение об успешном сохранении
     if (!empty($_COOKIE['save'])) {
         setcookie('save', '', 100000);
         $messages[] = 'Спасибо, результаты сохранены.';
     }
 
-    // Массивы для ошибок и значений
     $errors = array();
     $values = array();
 
-    // Поля для проверки
     $fields = ['full_name', 'phone', 'email', 'birth_date', 'gender', 'languages', 'biography', 'agreed'];
 
     foreach ($fields as $field) {
         $errors[$field] = !empty($_COOKIE[$field . '_error']);
         $values[$field] = $_COOKIE[$field . '_value'] ?? '';
         
-        // Удаляем куки после чтения
         if ($errors[$field]) {
             setcookie($field . '_error', '', 100000);
             setcookie($field . '_value', '', 100000);
         }
     }
 
-    // Выводим сообщения об ошибках
     if ($errors['full_name']) {
         $messages[] = '<div class="error-message">Ошибка в поле "ФИО": ФИО должно содержать только буквы, пробелы и дефисы (не более 150 символов).</div>';
     }
@@ -39,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         $messages[] = '<div class="error-message">Ошибка в поле "E-mail": Введите корректный email (пример: name@domain.ru).</div>';
     }
     if ($errors['birth_date']) {
-        $messages[] = '<div class="error-message">Ошибка в поле "Дата рождения": Введите корректную дату рождения.</div>';
+        $messages[] = '<div class="error-message">Ошибка в поле "Дата рождения": Дата рождения не может быть в будущем.</div>';
     }
     if ($errors['gender']) {
         $messages[] = '<div class="error-message">Ошибка в поле "Пол": Выберите пол.</div>';
@@ -55,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     exit();
 }
 
-// POST запрос - обработка формы
+// POST запрос
 $errors = false;
 
 // 1. ФИО
@@ -91,13 +86,21 @@ if (empty($_POST['email'])) {
 }
 setcookie('email_value', $_POST['email'], time() + 30 * 24 * 60 * 60);
 
-// 4. Дата рождения
+// 4. Дата рождения (с проверкой на будущую дату)
 if (empty($_POST['birth_date'])) {
     setcookie('birth_date_error', '1', time() + 24 * 60 * 60);
     $errors = true;
-} elseif (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $_POST['birth_date']) || !strtotime($_POST['birth_date'])) {
+} elseif (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $_POST['birth_date'])) {
     setcookie('birth_date_error', '1', time() + 24 * 60 * 60);
     $errors = true;
+} else {
+    $birth_timestamp = strtotime($_POST['birth_date']);
+    $today_timestamp = strtotime(date('Y-m-d'));
+    
+    if ($birth_timestamp > $today_timestamp) {
+        setcookie('birth_date_error', '1', time() + 24 * 60 * 60);
+        $errors = true;
+    }
 }
 setcookie('birth_date_value', $_POST['birth_date'], time() + 30 * 24 * 60 * 60);
 
@@ -108,7 +111,7 @@ if (empty($_POST['gender']) || !in_array($_POST['gender'], ['male', 'female'])) 
 }
 setcookie('gender_value', $_POST['gender'], time() + 30 * 24 * 60 * 60);
 
-// 6. Языки программирования
+// 6. Языки
 $allowed_langs = ['Pascal', 'C', 'C++', 'JavaScript', 'PHP', 'Python', 'Java', 'Haskell', 'Clojure', 'Prolog', 'Scala', 'Go'];
 if (empty($_POST['languages'])) {
     setcookie('languages_error', '1', time() + 24 * 60 * 60);
@@ -122,17 +125,16 @@ if (empty($_POST['languages'])) {
         }
     }
 }
-// Сохраняем языки как строку через запятую
 setcookie('languages_value', implode(',', $_POST['languages'] ?? []), time() + 30 * 24 * 60 * 60);
 
-// 7. Биография (необязательное поле, но проверяем длину)
+// 7. Биография
 if (!empty($_POST['biography']) && strlen($_POST['biography']) > 5000) {
     setcookie('biography_error', '1', time() + 24 * 60 * 60);
     $errors = true;
 }
 setcookie('biography_value', $_POST['biography'] ?? '', time() + 30 * 24 * 60 * 60);
 
-// 8. Согласие с контрактом
+// 8. Согласие
 if (empty($_POST['agreed'])) {
     setcookie('agreed_error', '1', time() + 24 * 60 * 60);
     $errors = true;
@@ -144,15 +146,15 @@ if ($errors) {
     exit();
 }
 
-// Если ошибок нет - удаляем все куки с ошибками
+// Удаляем ошибки
 $fields = ['full_name', 'phone', 'email', 'birth_date', 'gender', 'languages', 'biography', 'agreed'];
 foreach ($fields as $field) {
     setcookie($field . '_error', '', 100000);
 }
 
-// Сохранение в БД (код из 3 лабораторной)
+// Сохранение в БД
 $user = 'u82669';
-$pass = '9085380';
+$pass = 'ВАШ_ПАРОЛЬ';
 try {
     $db = new PDO('mysql:host=localhost;dbname=u82669', $user, $pass,
         [PDO::ATTR_PERSISTENT => true, PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
@@ -185,7 +187,6 @@ try {
     die("Ошибка БД: " . $e->getMessage());
 }
 
-// Сохраняем куку с признаком успешного сохранения
 setcookie('save', '1', time() + 24 * 60 * 60);
 header('Location: index.php');
 ?>
